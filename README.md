@@ -43,6 +43,12 @@ install libomp" if you use Homebrew).
 To generate a BRDF image, use the genBrdf command. You'll find the examples 
 below useful. Also, be sure to read the command line options in genBrdf.cpp.
 
+We provide three different kinds of heightfields (download separately): 
+[Isotropic](https://www.dropbox.com/s/siepjp35pfw218i/isotropic.exr?dl=1)(1.6 MB), 
+[Scratched](https://www.dropbox.com/s/p3mm6ws2o18kh3u/scratched.exr?dl=1)(4.3 MB), and  
+[Brushed](https://www.dropbox.com/s/vykp2bravkp3tzv/brushed_8K.exr?dl=1)(99.3 MB). 
+Note that, to run the examples below, you need to download these heightfields and put them in a *heightfields* folder.
+
 To view the generated BRDF image in EXR format, we recommend the [tev EXR 
 viewer](https://github.com/Tom94/tev).
 
