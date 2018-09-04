@@ -319,6 +319,7 @@ Float GeometricBrdf::queryBrdf(const Query &query) {
 }
 
 inline Vector2 sampleGauss2d(Float r1, Float r2) {
+    // https://en.wikipedia.org/wiki/Box-Muller_transform
     Float tmp = std::sqrt(-2 * std::log(r1));
     Float x = tmp * std::cos(2 * Float(M_PI) * r2);
     Float y = tmp * std::sin(2 * Float(M_PI) * r2);
@@ -353,6 +354,7 @@ Float* GeometricBrdf::genNdfImage(const Query &query, int resolution) {
         }
     }
 
+    // bin the samples using indices computed above
     int npix = resolution * resolution;
     int *bins = new int[npix];
     memset(bins, 0, npix * sizeof(int));
