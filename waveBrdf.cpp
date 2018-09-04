@@ -318,49 +318,53 @@ Float GeometricBrdf::queryBrdf(const Query &query) {
     return 0.0;
 }
 
+inline Vector2 sampleGauss2d(Float r1, Float r2) {
+    Float tmp = std::sqrt(-2 * std::log(r1));
+    Float x = tmp * std::cos(2 * Float(M_PI) * r2);
+    Float y = tmp * std::sin(2 * Float(M_PI) * r2);
+    return Vector2(x, y);
+}
+
 Float* GeometricBrdf::genNdfImage(const Query &query, int resolution) {
-    const Float intrinsicRoughness = 0.001;
+    int N = (int) std::sqrt(mSampleNum);
+    const Float intrinsicRoughness = Float(1) / N;
+    int *inds = new int[N * N];
 
-    Float *ndfImage = new Float[resolution * resolution * 3];
-    for (int i = 0; i < resolution; i++) {
-        for (int j = 0; j < resolution; j++) {
-            ndfImage[(i * resolution + j) * 3 + 0] = 0.0;
-            ndfImage[(i * resolution + j) * 3 + 1] = 0.0;
-            ndfImage[(i * resolution + j) * 3 + 2] = 0.0;
+    #pragma omp parallel for
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            // sample query Gaussian, stratified
+            Float rx = (i + randUniform<Float>()) / N;
+            Float ry = (j + randUniform<Float>()) / N;
+            Vector2 g = sampleGauss2d(rx, ry);
+
+            // look up normal
+            Vector2 x = g * query.sigma_p / mHeightfield->mTexelWidth;
+            x += query.mu_p;
+            Vector2 normal = mHeightfield->n(x[0], x[1]);
+
+            // intrinsic roughness
+            normal += intrinsicRoughness * sampleGauss2d(randUniform<Float>(), randUniform<Float>());
+
+            int xi = (int)((1 + normal[0]) / 2 * resolution);
+            int yi = (int)((1 - normal[1]) / 2 * resolution);
+            if (xi < 0 || xi >= resolution || yi < 0 || yi >= resolution) continue;
+            inds[i*N + j] = yi * resolution + xi;
         }
     }
 
-    for (int i = 0; i < mSampleNum; i++) {
-        // Draw samples
-        Float xSample = normrnd<Float>(query.mu_p(0), query.sigma_p);
-        Float ySample = normrnd<Float>(query.mu_p(1), query.sigma_p);
+    int npix = resolution * resolution;
+    int *bins = new int[npix];
+    memset(bins, 0, npix * sizeof(int));
+    for (int i = 0; i < N*N; i++) bins[inds[i]]++;
 
-        Float x = xSample / mHeightfield->mTexelWidth;
-        Float y = ySample / mHeightfield->mTexelWidth;
-        Vector2 normal = mHeightfield->n(x, y);
+    Vector3 *ndfImage = new Vector3[npix];
+    Float scale = Float(npix) / (4 * N * N);
+    for (int i = 0; i < npix; i++) ndfImage[i] = Vector3::Constant(scale * bins[i]);
 
-        Float nxSample = normrnd<Float>(normal(0), intrinsicRoughness);
-        Float nySample = normrnd<Float>(normal(1), intrinsicRoughness);
-
-        int slot1 = (int)((nxSample + 1.0f) / 2.0f * resolution);
-        int slot2 = (int)((nySample + 1.0f) / 2.0f * resolution);
-        if (slot1 < 0 || slot1 >= resolution || slot2 < 0 || slot2 >= resolution)
-            continue;
-
-        ndfImage[(slot1 * resolution + slot2) * 3 + 0] += 1.0;
-        ndfImage[(slot1 * resolution + slot2) * 3 + 1] += 1.0;
-        ndfImage[(slot1 * resolution + slot2) * 3 + 2] += 1.0;
-    }
-
-    for (int i = 0; i < resolution; i++) {
-        for (int j = 0; j < resolution; j++) {
-            ndfImage[(i * resolution + j) * 3 + 0] *= (Float) resolution * (Float) resolution / (4.0 * mSampleNum);
-            ndfImage[(i * resolution + j) * 3 + 1] *= (Float) resolution * (Float) resolution / (4.0 * mSampleNum);
-            ndfImage[(i * resolution + j) * 3 + 2] *= (Float) resolution * (Float) resolution / (4.0 * mSampleNum);
-        }
-    }
-
-    return ndfImage;
+    delete[] inds;
+    delete[] bins;
+    return (Float*) ndfImage;
 }
 
 Float* GeometricBrdf::genBrdfImage(const Query &query, int resolution) {

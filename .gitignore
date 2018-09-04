@@ -1,0 +1,4 @@
+*.o
+*.exr
+genBrdf
+heightfields/*
