@@ -1,19 +1,19 @@
 all: genBrdf
 
 genBrdf: exrimage.o gaborkernel.o waveBrdf.o spectrum.o genBrdf.cpp
-	g++ -std=c++11 -O2 exrimage.o gaborkernel.o waveBrdf.o spectrum.o genBrdf.cpp -o genBrdf -I/usr/include/eigen3 -L/usr/local/lib -lIlmImf -lHalf -march=native -Xpreprocessor -fopenmp -lomp
+	g++ -std=c++11 -O2 exrimage.o gaborkernel.o waveBrdf.o spectrum.o genBrdf.cpp -o genBrdf -I/usr/local/include/eigen3 -L/usr/local/lib -lIlmImf -lHalf -march=native -Xpreprocessor -fopenmp -lomp
 
 exrimage.o: exrimage.h exrimage.cpp
-	g++ -std=c++11 -O2 -c exrimage.cpp -I/usr/include/OpenEXR -I/usr/include/eigen3 -o exrimage.o -march=native -Xpreprocessor -fopenmp
+	g++ -std=c++11 -O2 -c exrimage.cpp -I/usr/include/OpenEXR -I/usr/local/include/eigen3 -o exrimage.o -march=native -Xpreprocessor -fopenmp
 
 gaborkernel.o: gaborkernel.h gaborkernel.cpp
-	g++ -std=c++11 -O2 -c gaborkernel.cpp -I/usr/include/OpenEXR -I/usr/include/eigen3 -o gaborkernel.o -march=native -Xpreprocessor -fopenmp
+	g++ -std=c++11 -O2 -c gaborkernel.cpp -I/usr/include/OpenEXR -I/usr/local/include/eigen3 -o gaborkernel.o -march=native -Xpreprocessor -fopenmp
 
 waveBrdf.o: waveBrdf.h waveBrdf.cpp
-	g++ -std=c++11 -O2 -c waveBrdf.cpp -I/usr/include/OpenEXR -I/usr/include/eigen3 -o waveBrdf.o -march=native -Xpreprocessor -fopenmp
+	g++ -std=c++11 -O2 -c waveBrdf.cpp -I/usr/include/OpenEXR -I/usr/local/include/eigen3 -o waveBrdf.o -march=native -Xpreprocessor -fopenmp
 
 spectrum.o: spectrum.h spectrum.cpp
-	g++ -std=c++11 -O2 -c spectrum.cpp -I/usr/include/OpenEXR -I/usr/include/eigen3 -o spectrum.o -march=native -Xpreprocessor -fopenmp
+	g++ -std=c++11 -O2 -c spectrum.cpp -I/usr/include/OpenEXR -I/usr/local/include/eigen3 -o spectrum.o -march=native -Xpreprocessor -fopenmp
 
 clean:
 	rm -f *.o
