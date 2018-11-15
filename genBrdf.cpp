@@ -23,6 +23,7 @@ along with WaveOpticsBrdf.  If not, see <https://www.gnu.org/licenses/>.
 #include <unistd.h>
 #include <chrono>
 #include <string>
+#include <sstream>
 #include "waveBrdf.h"
 #include "spectrum.h"
 
@@ -112,6 +113,22 @@ int main(int argc, char **argv) {
         EXRImage::writeImage(ndfImage, outputFilename, outputResolution, outputResolution);
         delete[] ndfImage;
     }
+    else if (method == "GeomNdfMany") {
+        GeometricBrdf geometricBrdf(&heightfield, sampleNum);
+        int N = 256;
+        float delta = 10;
 
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                query.mu_p = delta * Vector2(i, j);
+                Float *ndfImage = geometricBrdf.genNdfImage(query, outputResolution);
+                stringstream ss;
+                ss << outputFilename << i << '_' << j << ".exr";
+                EXRImage::writeImage(ndfImage, ss.str().c_str(), outputResolution, outputResolution);
+                delete[] ndfImage;
+            }
+        }
+
+    }
     return 0;
 }

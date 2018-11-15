@@ -60,7 +60,7 @@ comes from (-1, -1, 1). The output has a resolution of 128 by 128.
 ```
 ./genBrdf -m Wave -d OHS -i heightfields/isotropic.exr -o isotropicBrdf.exr -x 512 -y 512 -p 10.0 -w 1.0 -s -1.0 -t -1.0 -r 128
 ```
-(2) A grayscale wave optics BRDF generaged from a scratched isotropic 
+(2) A grayscale wave optics BRDF generated from a scratched isotropic 
 heightfield, where each texel has a length of 0.5 microns. The incident light 
 comes from top to down by default. The wave length is 0.5 microns (500 nm). The diffraction model is ROHS.
 ```

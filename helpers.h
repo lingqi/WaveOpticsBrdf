@@ -22,14 +22,14 @@ along with WaveOpticsBrdf.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef HELPERS_H
 #define HELPERS_H
 
-#define M_PIf Float(M_PI)
-#define M_2PIf 6.28318530718f
-#define M_2PIf_inv 0.15915494309f
-
 #include <cmath>
 #include <complex>
 #include <cstdlib>
 #include <Eigen/Dense>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323
+#endif
 
 typedef float Float;
 typedef Eigen::Vector2f Vector2;
