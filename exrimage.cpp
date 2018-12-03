@@ -114,3 +114,4 @@ void EXRImage::writeImage(const Float *image, const char *filename, int outputHe
 
     delete[] pixels;
 }
+

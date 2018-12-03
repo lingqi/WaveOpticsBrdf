@@ -49,6 +49,10 @@ Vector2 Heightfield::n(Float i, Float j) {
     return n.head(2);
 }
 
+Float Heightfield::eval(Float x, Float y) {
+    return mHeightfieldImage->getValue(x / mTexelWidth, y / mTexelWidth) * mVertScale;
+}
+
 WaveBrdfAccel::WaveBrdfAccel(Heightfield *heightfield, string method) {
     mHeightfield = heightfield;
     mMethod = method;

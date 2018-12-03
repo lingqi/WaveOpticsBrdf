@@ -42,7 +42,6 @@ struct Query {
     Float sigma_p;
     Vector2 omega_i;
     Vector2 omega_o;
-
     Float lambda;           // in microns.
 };
 
@@ -56,6 +55,8 @@ public:
     Heightfield(EXRImage *heightfieldImage, Float texelWidth = 1.0, Float vertScale = 1.0)
         : mHeightfieldImage(heightfieldImage), mTexelWidth(texelWidth), mVertScale(vertScale) {}
     GaborKernel g(int i, int j, Float F, Float lambda);
+
+    Float eval(Float x, Float y);
 
     Vector2 n(Float i, Float j);
 public:

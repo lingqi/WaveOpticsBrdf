@@ -25,6 +25,7 @@ along with WaveOpticsBrdf.  If not, see <https://www.gnu.org/licenses/>.
 #include <string>
 #include <sstream>
 #include "waveBrdf.h"
+#include "waveNdf.h"
 #include "spectrum.h"
 
 using namespace std;
@@ -44,7 +45,7 @@ int main(int argc, char **argv) {
     string method = "Wave";
     int sampleNum = 10000000;
     string diffModel = "OHS";
-    double lambda = 0.0;
+    double lambda = 0.5;
 
     double omega_i_x = 0.0;
     double omega_i_y = 0.0;
@@ -128,7 +129,11 @@ int main(int argc, char **argv) {
                 delete[] ndfImage;
             }
         }
-
     }
+    else if (method == "WaveNdf") {
+        WaveNDF waveNdf(heightfield, outputResolution);
+        waveNdf.generate(query, outputFilename);
+    }
+
     return 0;
 }
