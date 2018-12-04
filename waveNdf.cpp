@@ -2,6 +2,7 @@
 #include <unsupported/Eigen/FFT>
 #include <vector>
 #include <iostream>
+#include "spectrum.h"
 #include "waveNdf.h"
 
 using namespace std;
@@ -44,8 +45,10 @@ void WaveNDF::fftshift()
 }
 
 
-void WaveNDF::generate(const Query& query, char* outputFilename)
+void WaveNDF::generate(Query& query, char* outputFilename)
 {
+	if (query.lambda <= 0) { generateSpectral(query, outputFilename); return; }
+
 	int n = resolution;
 	int nh = n / 2;
 	img.resize(n, n);
@@ -75,18 +78,50 @@ void WaveNDF::generate(const Query& query, char* outputFilename)
 	fft2();
 	fftshift();
 
-	Float mx = 0;
+	for (int i = 0; i < n; i++)
+		for (int j = 0; j < n; j++)
+			out(i, j) = norm(img(i, j)); // already squared
+
+	out *= 1.0f / (resolution * resolution);
+
+	if (outputFilename != nullptr)
+	{
+		ColorImage rgb(n, n);
+		for (int i = 0; i < n; i++)
+			for (int j = 0; j < n; j++)
+				rgb(i, j).setConstant(out(i, j));
+		EXRImage::writeImage((float*) &rgb(0,0), outputFilename, n, n);
+	}
+}
+
+
+void WaveNDF::generateSpectral(Query& query, char* outputFilename)
+{
+	const int s = SPECTRUM_SAMPLES;
+	vector<float> lambdas(s);
+	for (int i = 0; i < s; i++)
+		lambdas[i] = (i + 0.5) / s * (0.7 - 0.3) + 0.3;
+
+	vector<FloatImage> channels(s);
+	for (int i = 0; i < s; i++)
+	{
+		query.lambda = lambdas[i];
+		generate(query, nullptr);
+		channels[i] = out;
+	}
+
+	vector<float> tmp(s);
+	float r, g, b;
+	int n = resolution;
+	ColorImage rgb(n, n);
+
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < n; j++)
 		{
-			float v = norm(img(i, j));
-			mx = std::max(mx, v);
-			out(i, j).setConstant(v); // already squared=
+			for (int k = 0; k < s; k++) tmp[k] = channels[k](i, j);
+			SpectrumToRGB(tmp, r, g, b);
+			rgb(i, j) = Color(r, g, b);
 		}
 
-	for (int i = 0; i < n; i++)
-		for (int j = 0; j < n; j++)
-			out(i, j) /= mx;
-
-	EXRImage::writeImage((float*) &out(0,0), outputFilename, n, n);
+	EXRImage::writeImage((float*) &rgb(0,0), outputFilename, n, n);
 }

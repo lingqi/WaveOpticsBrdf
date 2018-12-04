@@ -26,6 +26,7 @@ along with WaveOpticsBrdf.  If not, see <https://www.gnu.org/licenses/>.
 
 typedef Eigen::Matrix<std::complex<float>, Eigen::Dynamic, 1> VectorXc;
 typedef Eigen::Array<float, 3, 1> Color;
+typedef Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> FloatImage;
 typedef Eigen::Array<Color, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> ColorImage;
 typedef Eigen::Array<std::complex<float>, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> ComplexImage;
 
@@ -35,7 +36,7 @@ class WaveNDF
     Heightfield& hf;
     int resolution;
     ComplexImage img, tmp;
-    ColorImage out;
+    FloatImage out;
     VectorXc a, b;
 
     void fft2();
@@ -43,7 +44,8 @@ class WaveNDF
 
 public:
     WaveNDF(Heightfield& h, int res): hf(h), resolution(res) {}
-    void generate(const Query& query, char* outputFilename);
+    void generate(Query& query, char* outputFilename);
+    void generateSpectral(Query& query, char* outputFilename);
 };
 
 
