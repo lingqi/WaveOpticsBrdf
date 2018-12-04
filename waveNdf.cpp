@@ -45,7 +45,7 @@ void WaveNDF::fftshift()
 }
 
 
-void WaveNDF::generate(Query& query, char* outputFilename)
+void WaveNDF::generate(const Query& query, const char* outputFilename)
 {
 	if (query.lambda <= 0) { generateSpectral(query, outputFilename); return; }
 
@@ -86,7 +86,7 @@ void WaveNDF::generate(Query& query, char* outputFilename)
 
 	if (outputFilename != nullptr)
 	{
-		ColorImage rgb(n, n);
+		rgb.resize(n, n);
 		for (int i = 0; i < n; i++)
 			for (int j = 0; j < n; j++)
 				rgb(i, j).setConstant(out(i, j));
@@ -95,31 +95,34 @@ void WaveNDF::generate(Query& query, char* outputFilename)
 }
 
 
-void WaveNDF::generateSpectral(Query& query, char* outputFilename)
+void WaveNDF::generateSpectral(const Query& query, const char* outputFilename)
 {
 	const int s = SPECTRUM_SAMPLES;
-	vector<float> lambdas(s);
+	lambdas.resize(s);
+	colors.resize(s);
+	channels.resize(s);
+
 	for (int i = 0; i < s; i++)
 		lambdas[i] = (i + 0.5) / s * (0.7 - 0.3) + 0.3;
 
-	vector<FloatImage> channels(s);
 	for (int i = 0; i < s; i++)
 	{
-		query.lambda = lambdas[i];
-		generate(query, nullptr);
+		Query q = query;
+		q.lambda = lambdas[i];
+		q.sigma_p *= lambdas[i] / 0.5;
+		generate(q, nullptr);
 		channels[i] = out;
 	}
 
-	vector<float> tmp(s);
 	float r, g, b;
 	int n = resolution;
-	ColorImage rgb(n, n);
+	rgb.resize(n, n);
 
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < n; j++)
 		{
-			for (int k = 0; k < s; k++) tmp[k] = channels[k](i, j);
-			SpectrumToRGB(tmp, r, g, b);
+			for (int k = 0; k < s; k++) colors[k] = channels[k](i, j);
+			SpectrumToRGB(colors, r, g, b);
 			rgb(i, j) = Color(r, g, b);
 		}
 

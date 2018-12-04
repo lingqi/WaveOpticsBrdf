@@ -134,6 +134,22 @@ int main(int argc, char **argv) {
         WaveNDF waveNdf(heightfield, outputResolution);
         waveNdf.generate(query, outputFilename);
     }
+    else if (method == "WaveNdfMany") {
+        int N = 20;
+        float delta = 20;
+
+        #pragma omp parallel for schedule(dynamic)
+        for (int i = 0; i < N; i++) {
+            WaveNDF waveNdf(heightfield, outputResolution);
+            Query q = query;
+            for (int j = 0; j < N; j++) {
+                q.mu_p = delta * Vector2(i, j);
+                stringstream ss;
+                ss << outputFilename << i << '_' << j << ".exr";
+                waveNdf.generate(q, ss.str().c_str());
+            }
+        }
+    }
 
     return 0;
 }

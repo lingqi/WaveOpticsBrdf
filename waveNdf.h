@@ -37,15 +37,18 @@ class WaveNDF
     int resolution;
     ComplexImage img, tmp;
     FloatImage out;
+    ColorImage rgb;
     VectorXc a, b;
+    std::vector<float> lambdas, colors;
+    std::vector<FloatImage> channels;
 
     void fft2();
     void fftshift();
 
 public:
     WaveNDF(Heightfield& h, int res): hf(h), resolution(res) {}
-    void generate(Query& query, char* outputFilename);
-    void generateSpectral(Query& query, char* outputFilename);
+    void generate(const Query& query, const char* outputFilename);
+    void generateSpectral(const Query& query, const char* outputFilename);
 };
 
 
