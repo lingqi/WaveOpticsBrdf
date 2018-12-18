@@ -34,19 +34,20 @@ typedef Eigen::Array<std::complex<float>, Eigen::Dynamic, Eigen::Dynamic, Eigen:
 class WaveNDF
 {
     Heightfield& hf;
-    int resolution;
+    int resolution, crop;
     ComplexImage img, tmp;
     FloatImage out;
-    ColorImage rgb;
+    ColorImage rgb, cropped;
     VectorXc a, b;
     std::vector<float> lambdas, colors;
     std::vector<FloatImage> channels;
 
     void fft2();
     void fftshift();
+    void mkCrop();
 
 public:
-    WaveNDF(Heightfield& h, int res): hf(h), resolution(res) {}
+    WaveNDF(Heightfield& h, int res, int c): hf(h), resolution(res), crop(c) {}
     void generate(const Query& query, const char* outputFilename);
     void generateSpectral(const Query& query, const char* outputFilename);
 };

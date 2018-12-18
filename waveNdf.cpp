@@ -45,6 +45,14 @@ void WaveNDF::fftshift()
 }
 
 
+void WaveNDF::mkCrop()
+{
+	cropped.resize(crop, crop);
+	int i = (resolution - crop) / 2;
+	cropped = rgb.block(i, i, crop, crop);
+}
+
+
 void WaveNDF::generate(const Query& query, const char* outputFilename)
 {
 	if (query.lambda <= 0) { generateSpectral(query, outputFilename); return; }
@@ -90,7 +98,10 @@ void WaveNDF::generate(const Query& query, const char* outputFilename)
 		for (int i = 0; i < n; i++)
 			for (int j = 0; j < n; j++)
 				rgb(i, j).setConstant(out(i, j));
-		EXRImage::writeImage((float*) &rgb(0,0), outputFilename, n, n);
+
+		float* p = (float*) &rgb(0,0);
+		if (crop > 0) { mkCrop(); p = (float*) &cropped(0,0); n = crop; }
+		EXRImage::writeImage(p, outputFilename, n, n);
 	}
 }
 
@@ -126,5 +137,7 @@ void WaveNDF::generateSpectral(const Query& query, const char* outputFilename)
 			rgb(i, j) = Color(r, g, b);
 		}
 
-	EXRImage::writeImage((float*) &rgb(0,0), outputFilename, n, n);
+	float* p = (float*) &rgb(0,0);
+	if (crop > 0) { mkCrop(); p = (float*) &cropped(0,0); n = crop; }
+	EXRImage::writeImage(p, outputFilename, n, n);
 }

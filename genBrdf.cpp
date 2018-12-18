@@ -31,6 +31,18 @@ along with WaveOpticsBrdf.  If not, see <https://www.gnu.org/licenses/>.
 using namespace std;
 using namespace Eigen;
 
+
+Float* mkCrop(Float* img, int n, int c)
+{
+    Float* result = new Float[c * c * 3 * sizeof(Float)];
+    Map<ColorImage> src((Color*) img, n, n);
+    Map<ColorImage> dst((Color*) result, c, c);
+    int i = (n - c) / 2;
+    dst = src.block(i, i, c, c);
+    delete[] img;
+    return result;
+}
+
 int main(int argc, char **argv) {
     srand(time(NULL));
 
@@ -51,10 +63,11 @@ int main(int argc, char **argv) {
     double omega_i_y = 0.0;
 
     char *outputFilename = NULL;
-    int outputResolution = 256;
+    int resolution = 256;
+    int crop = 0;
 
     int opt;
-    while ((opt = getopt(argc, argv, "i:o:l:r:e:w:v:x:y:p:m:g:d:s:t:n:")) != -1) {
+    while ((opt = getopt(argc, argv, "i:o:l:r:e:w:v:x:y:p:m:g:d:s:t:n:c:")) != -1) {
         switch (opt) {
             case 'i': heightfieldFilename = optarg; break;      // heightfield filename.
             case 'w': texelWidth = atof(optarg); break;         // The width of a texel in microns on the heightfield.
@@ -73,7 +86,8 @@ int main(int argc, char **argv) {
             case 't': omega_i_y = atof(optarg); break;          // Incoming light's y coordinate (assuming z = 1).
 
             case 'o': outputFilename = optarg; break;           // output filename.
-            case 'r': outputResolution = atoi(optarg); break;   // output resolution.
+            case 'r': resolution = atoi(optarg); break;         // output resolution.
+            case 'c': crop = atoi(optarg); break;     // crop resolution (no crop if value <= 0)
         }
     }
 
@@ -98,20 +112,23 @@ int main(int argc, char **argv) {
     query.omega_i = Vector3(omega_i_x, omega_i_y, 1.0).normalized().head(2);
     query.lambda = lambda;
 
+    int n = resolution;
+
     if (method == "Geom") {
         GeometricBrdf geometricBrdf(&heightfield, sampleNum);
-        Float *brdfImage = geometricBrdf.genBrdfImage(query, outputResolution);
-        EXRImage::writeImage(brdfImage, outputFilename, outputResolution, outputResolution);
+        Float *brdfImage = geometricBrdf.genBrdfImage(query, n);
+        EXRImage::writeImage(brdfImage, outputFilename, n, n);
         delete[] brdfImage;
     } else if (method == "Wave") {
         WaveBrdfAccel waveBrdfAccel(&heightfield, diffModel);
-        Float *brdfImage = waveBrdfAccel.genBrdfImage(query, outputResolution);
-        EXRImage::writeImage(brdfImage, outputFilename, outputResolution, outputResolution);
+        Float *brdfImage = waveBrdfAccel.genBrdfImage(query, n);
+        EXRImage::writeImage(brdfImage, outputFilename, n, n);
         delete[] brdfImage;
     } else if (method == "GeomNdf") {
         GeometricBrdf geometricBrdf(&heightfield, sampleNum);
-        Float *ndfImage = geometricBrdf.genNdfImage(query, outputResolution);
-        EXRImage::writeImage(ndfImage, outputFilename, outputResolution, outputResolution);
+        Float *ndfImage = geometricBrdf.genNdfImage(query, n);
+        if (crop > 0) { ndfImage = mkCrop(ndfImage, n, crop); n = crop; }
+        EXRImage::writeImage(ndfImage, outputFilename, n, n);
         delete[] ndfImage;
     }
     else if (method == "GeomNdfMany") {
@@ -122,16 +139,17 @@ int main(int argc, char **argv) {
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
                 query.mu_p = delta * Vector2(i, j);
-                Float *ndfImage = geometricBrdf.genNdfImage(query, outputResolution);
+                Float *ndfImage = geometricBrdf.genNdfImage(query, n);
+                if (crop > 0) { ndfImage = mkCrop(ndfImage, n, crop); n = crop; }
                 stringstream ss;
                 ss << outputFilename << i << '_' << j << ".exr";
-                EXRImage::writeImage(ndfImage, ss.str().c_str(), outputResolution, outputResolution);
+                EXRImage::writeImage(ndfImage, ss.str().c_str(), n, n);
                 delete[] ndfImage;
             }
         }
     }
     else if (method == "WaveNdf") {
-        WaveNDF waveNdf(heightfield, outputResolution);
+        WaveNDF waveNdf(heightfield, n, crop);
         waveNdf.generate(query, outputFilename);
     }
     else if (method == "WaveNdfMany") {
@@ -140,7 +158,7 @@ int main(int argc, char **argv) {
 
         #pragma omp parallel for schedule(dynamic)
         for (int i = 0; i < N; i++) {
-            WaveNDF waveNdf(heightfield, outputResolution);
+            WaveNDF waveNdf(heightfield, n, crop);
             Query q = query;
             for (int j = 0; j < N; j++) {
                 q.mu_p = delta * Vector2(i, j);
