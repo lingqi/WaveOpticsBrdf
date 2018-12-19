@@ -62,12 +62,17 @@ void WaveNDF::generate(const Query& query, const char* outputFilename)
 	img.resize(n, n);
 	out.resize(n, n);
 
+	// normalizing constant
+	float Ac = std::sqrt(2.0f) * M_PI * query.sigma_p * query.sigma_p; // integral of *squared* footprint
+	float C = 1 / (Ac * query.lambda * query.lambda); // see Wave NDF doc
+	float T = 2.0f * k * query.sigma_p / n; // sample step in primal domain
+
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < n; j++)
 		{
 			// map window to [-k, k]^2
-			float u = float(i - nh) / nh;
-			float v = float(j - nh) / nh;
+			float u = (i + 0.5f - nh) / nh;
+			float v = (j + 0.5f - nh) / nh;
 			u *= k; v *= k;
 			
 			// unit Gaussian window
@@ -94,13 +99,14 @@ void WaveNDF::generate(const Query& query, const char* outputFilename)
 	fftshift();
 	fft2();
 	fftshift();
+	img *= T * T; // area of one cell
 
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < n; j++)
-			out(i, j) = norm(img(i, j)); // already squared
+			out(i, j) = norm(img(i, j)); // "norm" is squared, per C++ complex docs
 
-	// undo scaling introduced by FFT
-	out *= 1.0f / (resolution * resolution);
+	// normalize
+	out *= C;
 
 	if (outputFilename != nullptr)
 	{
