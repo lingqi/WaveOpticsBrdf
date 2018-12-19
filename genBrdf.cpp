@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
     double sigma_p = 10.0;
 
     string method = "Wave";
-    int sampleNum = 10000000;
+    int sampleNum = 500000;
     string diffModel = "OHS";
     double lambda = 0.5;
 
@@ -134,16 +134,17 @@ int main(int argc, char **argv) {
     else if (method == "GeomNdfMany") {
         GeometricBrdf geometricBrdf(&heightfield, sampleNum);
         int N = 256;
-        float delta = 10;
+        float delta = 16;
 
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
                 query.mu_p = delta * Vector2(i, j);
                 Float *ndfImage = geometricBrdf.genNdfImage(query, n);
-                if (crop > 0) { ndfImage = mkCrop(ndfImage, n, crop); n = crop; }
+                int s = n;
+                if (crop > 0) { ndfImage = mkCrop(ndfImage, n, crop); s = crop; }
                 stringstream ss;
                 ss << outputFilename << i << '_' << j << ".exr";
-                EXRImage::writeImage(ndfImage, ss.str().c_str(), n, n);
+                EXRImage::writeImage(ndfImage, ss.str().c_str(), s, s);
                 delete[] ndfImage;
             }
         }
@@ -153,8 +154,8 @@ int main(int argc, char **argv) {
         waveNdf.generate(query, outputFilename);
     }
     else if (method == "WaveNdfMany") {
-        int N = 20;
-        float delta = 20;
+        int N = 256;
+        float delta = 16;
 
         #pragma omp parallel for schedule(dynamic)
         for (int i = 0; i < N; i++) {
