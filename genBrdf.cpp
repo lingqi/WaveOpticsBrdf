@@ -65,9 +65,10 @@ int main(int argc, char **argv) {
     char *outputFilename = NULL;
     int resolution = 256;
     int crop = 0;
+    int footprint_k = 3;
 
     int opt;
-    while ((opt = getopt(argc, argv, "i:o:l:r:e:w:v:x:y:p:m:g:d:s:t:n:c:")) != -1) {
+    while ((opt = getopt(argc, argv, "i:o:l:r:e:w:v:x:y:p:m:g:d:s:t:n:c:k:")) != -1) {
         switch (opt) {
             case 'i': heightfieldFilename = optarg; break;      // heightfield filename.
             case 'w': texelWidth = atof(optarg); break;         // The width of a texel in microns on the heightfield.
@@ -87,7 +88,8 @@ int main(int argc, char **argv) {
 
             case 'o': outputFilename = optarg; break;           // output filename.
             case 'r': resolution = atoi(optarg); break;         // output resolution.
-            case 'c': crop = atoi(optarg); break;     // crop resolution (no crop if value <= 0)
+            case 'c': crop = atoi(optarg); break;               // crop resolution (no crop if value <= 0)
+            case 'k': footprint_k = atoi(optarg); break;        // Gaussian footprint cutoff at k sigma
         }
     }
 
@@ -150,7 +152,7 @@ int main(int argc, char **argv) {
         }
     }
     else if (method == "WaveNdf") {
-        WaveNDF waveNdf(heightfield, n, crop);
+        WaveNDF waveNdf(heightfield, n, crop, footprint_k, lambda > 0);
         waveNdf.generate(query, outputFilename);
     }
     else if (method == "WaveNdfMany") {
@@ -159,7 +161,7 @@ int main(int argc, char **argv) {
 
         #pragma omp parallel for schedule(dynamic)
         for (int i = 0; i < N; i++) {
-            WaveNDF waveNdf(heightfield, n, crop);
+            WaveNDF waveNdf(heightfield, n, crop, footprint_k);
             Query q = query;
             for (int j = 0; j < N; j++) {
                 q.mu_p = delta * Vector2(i, j);

@@ -65,15 +65,15 @@ void WaveNDF::generate(const Query& query, const char* outputFilename)
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < n; j++)
 		{
-			// map window to [-3, 3]^2
+			// map window to [-k, k]^2
 			float u = float(i - nh) / nh;
 			float v = float(j - nh) / nh;
-			u *= 3; v *= 3;
+			u *= k; v *= k;
 			
 			// unit Gaussian window
 			Float g = std::exp(-0.5f * (u*u + v*v));
 
-			// map to query footprint [-3 sigma, 3 sigma]^2
+			// map to query footprint [-k sigma, k sigma]^2
 			u *= query.sigma_p; v *= query.sigma_p;
 			u += query.mu_p[0]; v += query.mu_p[1];
 			
@@ -81,6 +81,15 @@ void WaveNDF::generate(const Query& query, const char* outputFilename)
 			float h = hf.eval(u, v);
 			img(i, j) = g * cis(-4 * float(M_PI) * h / query.lambda);
 		}
+
+	if (visRs)
+	{
+		rgb.resize(n, n);
+		for (int i = 0; i < n; i++)
+			for (int j = 0; j < n; j++)
+				rgb(i, j).setConstant(img(i, j).real());
+		EXRImage::writeImage((float*) &rgb(0,0), "Rs.exr", n, n);
+	}
 
 	fftshift();
 	fft2();
@@ -90,6 +99,7 @@ void WaveNDF::generate(const Query& query, const char* outputFilename)
 		for (int j = 0; j < n; j++)
 			out(i, j) = norm(img(i, j)); // already squared
 
+	// undo scaling introduced by FFT
 	out *= 1.0f / (resolution * resolution);
 
 	if (outputFilename != nullptr)
