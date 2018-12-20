@@ -62,9 +62,10 @@ void WaveNDF::generate(const Query& query, const char* outputFilename)
 	img.resize(n, n);
 	out.resize(n, n);
 
-	// normalizing constant
-	float Ac = std::sqrt(2.0f) * M_PI * query.sigma_p * query.sigma_p; // integral of *squared* footprint
+	// normalizing constants
+	float Ac = M_PI * query.sigma_p * query.sigma_p; // integral of *squared* footprint
 	float C = 1 / (Ac * query.lambda * query.lambda); // see Wave NDF doc
+	C *= 4; // this approximates the (psi . n)^2 term for small angles
 	float T = 2.0f * k * query.sigma_p / n; // sample step in primal domain
 
 	for (int i = 0; i < n; i++)
