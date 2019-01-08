@@ -32,8 +32,7 @@ using namespace std;
 using namespace Eigen;
 
 
-Float* mkCrop(Float* img, int n, int c)
-{
+Float* mkCrop(Float* img, int n, int c) {
     Float* result = new Float[c * c * 3 * sizeof(Float)];
     Map<ColorImage> src((Color*) img, n, n);
     Map<ColorImage> dst((Color*) result, c, c);
@@ -41,6 +40,10 @@ Float* mkCrop(Float* img, int n, int c)
     dst = src.block(i, i, c, c);
     delete[] img;
     return result;
+}
+
+void printRange(float radius) {
+    cout << "NDF image range: [-" << radius << ", " << radius << "]^2\n";
 }
 
 int main(int argc, char **argv) {
@@ -129,9 +132,11 @@ int main(int argc, char **argv) {
     } else if (method == "GeomNdf") {
         GeometricBrdf geometricBrdf(&heightfield, sampleNum);
         Float *ndfImage = geometricBrdf.genNdfImage(query, n);
-        if (crop > 0) { ndfImage = mkCrop(ndfImage, n, crop); n = crop; }
+        float radius = 1;
+        if (crop > 0) { ndfImage = mkCrop(ndfImage, n, crop); radius *= float(crop) / n; n = crop; }
         EXRImage::writeImage(ndfImage, outputFilename, n, n);
         delete[] ndfImage;
+        printRange(radius);
     }
     else if (method == "GeomNdfMany") {
         GeometricBrdf geometricBrdf(&heightfield, sampleNum);
@@ -154,6 +159,11 @@ int main(int argc, char **argv) {
     else if (method == "WaveNdf") {
         WaveNDF waveNdf(heightfield, n, crop, footprint_k, lambda > 0);
         waveNdf.generate(query, outputFilename);
+        if (crop > 0) n = crop;
+        float lambda = query.lambda;
+        if (lambda <= 0) lambda = 0.5f;
+        float radius = lambda * n / (4 * footprint_k * query.sigma_p);
+        printRange(radius);
     }
     else if (method == "WaveNdfMany") {
         int N = 256;

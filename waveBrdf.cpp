@@ -352,9 +352,9 @@ Float* GeometricBrdf::genNdfImage(const Query &query, int resolution) {
             normal += intrinsicRoughness * sampleGauss2d(randUniform<Float>(), randUniform<Float>());
 
             int xi = (int)((1 + normal[0]) / 2 * resolution);
-            int yi = (int)((1 - normal[1]) / 2 * resolution);
+            int yi = (int)((1 + normal[1]) / 2 * resolution);
             if (xi < 0 || xi >= resolution || yi < 0 || yi >= resolution) continue;
-            inds[i*N + j] = yi * resolution + xi;
+            inds[i*N + j] = xi * resolution + yi;
         }
     }
 
